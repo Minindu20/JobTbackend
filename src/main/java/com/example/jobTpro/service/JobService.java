@@ -1,15 +1,20 @@
 package com.example.jobTpro.service;
 
 import com.example.jobTpro.entity.Job;
+import com.example.jobTpro.entity.JobStatus;
+import com.example.jobTpro.entity.JobType;
 import com.example.jobTpro.entity.User;
 import com.example.jobTpro.repo.JobRepository;
 import com.example.jobTpro.repo.UserRepository;
 import com.example.jobTpro.utils.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -100,4 +105,18 @@ public class JobService {
         jobResponse.put("msg","Job deleted");
         return jobResponse;
     }
+    public Map<String, List<Job>> getAllJobs(String search, JobStatus searchStatus, JobType searchType, String sort, int page,String token) {
+        int userId = jwtTokenUtil.getUserIdFromToken(token);
+        Pageable pageable = PageRequest.of(page - 1, 10); // Assuming 10 items per page
+        search = (search == null || search.isEmpty()) ? null : search;
+        List<Job> jobs = jobRepository.searchJobs(searchStatus, searchType, search, sort, userId,pageable);
+        Map<String, List<Job>> response = new HashMap<>();
+        response.put("jobs", jobs);
+        return response;
+    }
+
+//    public Map<String,Object>getStats(String token){
+//        int userId = jwtTokenUtil.getUserIdFromToken(token);
+//
+//    }
 }

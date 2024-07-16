@@ -1,4 +1,7 @@
 package com.example.jobTpro.entity;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +27,8 @@ public class Job {
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @JsonIdentityReference(alwaysAsId = true)
     private User createdBy;
 
     @Enumerated(EnumType.STRING)
