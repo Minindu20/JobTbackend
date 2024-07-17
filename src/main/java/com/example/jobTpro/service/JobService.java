@@ -8,14 +8,12 @@ import com.example.jobTpro.repo.JobRepository;
 import com.example.jobTpro.repo.UserRepository;
 import com.example.jobTpro.utils.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class JobService {
@@ -105,18 +103,49 @@ public class JobService {
         jobResponse.put("msg","Job deleted");
         return jobResponse;
     }
-    public Map<String, List<Job>> getAllJobs(String search, JobStatus searchStatus, JobType searchType, String sort, int page,String token) {
+    public Map<String, Object> getAllJobs(String search, JobStatus searchStatus, JobType searchType, String sort, int page, String token) {
         int userId = jwtTokenUtil.getUserIdFromToken(token);
         Pageable pageable = PageRequest.of(page - 1, 10); // Assuming 10 items per page
         search = (search == null || search.isEmpty()) ? null : search;
-        List<Job> jobs = jobRepository.searchJobs(searchStatus, searchType, search, sort, userId,pageable);
-        Map<String, List<Job>> response = new HashMap<>();
+
+        Page<Job> jobPage = jobRepository.searchJobs(searchStatus, searchType, search, sort, userId, pageable);
+        List<Job> jobs = jobPage.getContent();
+        int totalJobs = (int) jobPage.getTotalElements();
+        int numOfPages = jobPage.getTotalPages();
+
+        Map<String, Object> response = new HashMap<>();
         response.put("jobs", jobs);
+        response.put("totalJobs", totalJobs);
+        response.put("numOfPages", numOfPages);
         return response;
     }
 
-//    public Map<String,Object>getStats(String token){
-//        int userId = jwtTokenUtil.getUserIdFromToken(token);
-//
-//    }
+    public Map<String, Object> getStats(String token) {
+        int userId = jwtTokenUtil.getUserIdFromToken(token);
+
+        List<Object[]> statusCounts = jobRepository.countJobsByStatus(userId);
+        Map<String, Integer> defaultStats = new HashMap<>();
+        for (Object[] statusCount : statusCounts) {
+            String status = (String) statusCount[0];
+            Long count = ((Number) statusCount[1]).longValue();
+            defaultStats.put(status.toLowerCase(), count.intValue());
+        }
+
+        List<Object[]> monthlyCounts = jobRepository.countJobsByMonth(userId);
+        List<Map<String, Object>> monthlyApplications = new ArrayList<>();
+        for (Object[] monthlyCount : monthlyCounts) {
+            String month = (String) monthlyCount[0];
+            Long count = ((Number) monthlyCount[1]).longValue();
+            Map<String, Object> monthData = new HashMap<>();
+            monthData.put("date", month);
+            monthData.put("count", count.intValue());
+            monthlyApplications.add(monthData);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("defaultStats", defaultStats);
+        response.put("monthlyApplications", monthlyApplications);
+
+        return response;
+    }
 }

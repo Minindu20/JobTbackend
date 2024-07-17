@@ -33,7 +33,7 @@ public class JobController {
     private JobRepository jobRepository;
 
     @GetMapping()
-    public ResponseEntity<Map<String, List<Job>>> getAllJobs(
+    public ResponseEntity<Map<String, Object>> getAllJobs(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "all") String status,
@@ -44,34 +44,17 @@ public class JobController {
             JobStatus jobStatus = "all".equalsIgnoreCase(status) ? null : JobStatus.fromValue(status);
             JobType type = "all".equalsIgnoreCase(jobType) ? null : JobType.fromValue(jobType);
             String authToken = token.substring(7);
-            Map<String, List<Job>> jobs = jobService.getAllJobs(search, jobStatus, type, sort, page,authToken);
+            Map<String, Object> jobs = jobService.getAllJobs(search, jobStatus, type, sort, page,authToken);
             return ResponseEntity.ok(jobs);
 
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<Map<String,Object>>getStats(@RequestHeader("Authorization") String token){
+    public ResponseEntity<Map<String,Object>>getStats(
+            @RequestHeader("Authorization") String token){
         String authToken = token.substring(7);
-        Map<String, Object> response = new HashMap<>();
-
-        Map<String, Integer> defaultStats = new HashMap<>();
-        defaultStats.put("pending", 28);
-        defaultStats.put("interview", 25);
-        defaultStats.put("declined", 22);
-
-        List<Map<String, Object>> monthlyApplications = new ArrayList<>();
-        monthlyApplications.add(Map.of("date", "Mar 2022", "count", 8));
-        monthlyApplications.add(Map.of("date", "Apr 2022", "count", 6));
-        monthlyApplications.add(Map.of("date", "May 2022", "count", 4));
-        monthlyApplications.add(Map.of("date", "Jun 2022", "count", 5));
-        monthlyApplications.add(Map.of("date", "Jul 2022", "count", 6));
-        monthlyApplications.add(Map.of("date", "Aug 2022", "count", 5));
-
-        response.put("defaultStats", defaultStats);
-        response.put("monthlyApplications", monthlyApplications);
-
-        return ResponseEntity.ok(response);
-
+        Map<String, Object> stats = jobService.getStats(authToken);
+        return ResponseEntity.status(HttpStatus.OK).body(stats);
     }
 
 
